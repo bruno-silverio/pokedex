@@ -258,7 +258,7 @@ body::-webkit-scrollbar-thumb {
 }
 .pokemon::before {
   content: "";
-  background: url(../imgs/header/pokeball.svg) no-repeat bottom 25px right/232px
+  background: url(../images/pokeball.svg) no-repeat bottom 25px right/232px
     232px;
   position: absolute;
   bottom: -120px;
@@ -361,7 +361,7 @@ body::-webkit-scrollbar-thumb {
 .pokemon-individual {
   margin-bottom: 30px;
   overflow: hidden;
-  background: url(../imgs/header/pokeball-gray.svg) no-repeat top left/contain;
+  background: url(../images/pokeball-gray.svg) no-repeat top left/contain;
 }
 .pokemon-infos {
   width: 100%;
