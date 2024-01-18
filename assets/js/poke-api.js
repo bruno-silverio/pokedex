@@ -1,17 +1,20 @@
-const pokeApi = {};
+
+const pokeApi = {}
 
 function convertPokeApiDetailToPokemon(pokeDetail) {
-    const pokemon = new Pokemon();
+    const pokemon = new Pokemon()
 
-    pokemon.num = pokeDetail.order;
-    pokemon.name = pokeDetail.name;
+    pokemon.id = pokeDetail.id
 
-    pokemon.stats.hp = pokeDetail.stats.find((item) => item.stat.name === 'hp').base_stat;
-    pokemon.stats.atk = pokeDetail.stats.find((item) => item.stat.name === 'attack').base_stat;
-    pokemon.stats.def = pokeDetail.stats.find((item) => item.stat.name === 'defense').base_stat;
-    pokemon.stats.sAtk = pokeDetail.stats.find((item) => item.stat.name === 'special-attack').base_stat;
-    pokemon.stats.sDef = pokeDetail.stats.find((item) => item.stat.name === 'special-defense').base_stat;
-    pokemon.stats.spd = pokeDetail.stats.find((item) => item.stat.name === 'speed').base_stat;
+    // formatação dos números dos pokemons para o estilo #000
+    let numberString = pokeDetail.id.toString()
+    while (numberString.length < 3) {
+        numberString = "0" + numberString
+    }
+
+    // atribuindo pokemon.number ao número formatado
+    pokemon.number = numberString
+    pokemon.name = pokeDetail.name
 
     const types = pokeDetail.types.map((typeSlot) => typeSlot.type.name)
     const [type] = types
@@ -19,56 +22,39 @@ function convertPokeApiDetailToPokemon(pokeDetail) {
     pokemon.types = types
     pokemon.type = type
 
-    pokemon.photo = pokeDetail.sprites.other.dream_world.front_default
+    // mapeando todo o arry stats, para poder pegar as infos que quiser do slot do stat
+    const stats = pokeDetail.stats.map((statSlot) => statSlot)
+    
+    const [stat] = stats
 
+    pokemon.stats = stats
+    pokemon.stat = stat
+
+    pokemon.photo = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokeDetail.id}.png`
     return pokemon
 }
 
+// aqui fiz ele receber tanto a url do pokemon das listas quanto somente a url capturada pela página de detalhes
 pokeApi.getPokemonDetail = (pokemon) => {
-    return fetch(pokemon.url)
+    return fetch(pokemon.url || url)
         .then((response) => response.json())
         .then(convertPokeApiDetailToPokemon)
 }
 
-pokeApi.getPokemons = (offset = 0, limit = 20) => {
-    const url = `https://pokeapi.co/api/v2/pokemon?offset=${offset}&limit=${limit}`;
+pokeApi.getPokemonDetails = (pokemon) => {
+    return fetch(pokemon)
+        .then((response) => response.json())
+        .then(convertPokeApiDetailToPokemon)
+}
 
+pokeApi.getPokemons = (offset = 0, limit = 5) => {
+    const url = `https://pokeapi.co/api/v2/pokemon?offset=${offset}&limit=${limit}`
     return fetch(url)
         .then((response) => response.json())
         .then((jsonBody) => jsonBody.results)
         .then((pokemons) => pokemons.map(pokeApi.getPokemonDetail))
         .then((detailRequests) => Promise.all(detailRequests))
-        .then((pokemonsDetails) => pokemonsDetails)
-};
-
-pokeApi.getPokemonStats = (pokemon) => {
-    const statUrls = pokemon.stats.map((stat) => stat.stat.url);
-    const statRequests = statUrls.map((url) => fetch(url).then((response) => response.json()));
-
-    return Promise.all(statRequests)
-        .then((statsData) => {
-            const stats = statsData.reduce((acc, statData) => {
-                const statName = statData.name;
-                const baseStat = statData.base_stat;
-
-                acc[statName] = {
-                    baseStat: baseStat,
-                    effort: statData.effort,
-                };
-
-                return acc;
-            }, {});
-
-            return {
-                name: pokemon.name,
-                stats: stats,
-            };
-        });
-};
+        .then((pokemonDetails) => pokemonDetails)
+}
 
 
-Promise.all([
-
-]).then((results) => {
-    console.log(results)
-})

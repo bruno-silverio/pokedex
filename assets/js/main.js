@@ -1,100 +1,87 @@
+let pokemonList = document.getElementById('pokemonList')
+const input = document.getElementById('search')
+const loadMoreButton = document.getElementById('loadMoreButton')
 
-function convertPokemonToLi(pokemon) {
-  return `
-      <li class="pokemon ${pokemon.type.toLowerCase()}">
-          <span class="number">${pokemon.num}</span>
-          <span class="name">${pokemon.name}</span>
-          <div class="detail">
-              <ol class="types">
-                  ${pokemon.types.map((type) => `<li class="type ${type.toLowerCase()}">${type}</li>`).join('')}
-              </ol>
-              <img src="${pokemon.photo}" alt="${pokemon.name}">
-              <!-- Adicione o botão para exibir as estatísticas no final do cartão -->
-          </div>
-          <button class="stats-btn" data-pokemon='${JSON.stringify(pokemon)}'>Mostrar Stats</button>
-      </li>
-  `;
-}
-
-
-const pokemonList = document.getElementById('pokemonList');
-
-pokeApi.getPokemons().then((pokemons = []) => {
-  console.log("Stats do primeiro Pokémon:", pokemons[0].stats);
-  const newHtml = pokemons.map(convertPokemonToLi).join('');
-  pokemonList.innerHTML = newHtml;
-});
-
-const loadMoreBtn = document.getElementById('carregarMais');
+const maxRecords = 1025
+const limit = 20
 let offset = 0;
 
-loadMoreBtn.addEventListener('click', () => {
-  offset += 20;
-  pokeApi.getPokemons(offset)
-      .then((pokemons = []) => {
-          const newHtml = pokemons.map(convertPokemonToLi).join('');
-          pokemonList.innerHTML += newHtml;
-      });
-});
+function loadPokemonitens(offset, limit) {
+    pokeApi.getPokemons(offset, limit).then((pokemons = []) => {
+        const newHtml = pokemons.map((pokemon) =>
+            `<li class="fadeIn">
+                <a href="details.html?id=${pokemon.id}" class="pokemon">
+                <span class="number slideInDown">#${pokemon.number}</span>
+                <h2 class="name slideInDown">${pokemon.name}</h2>
+                <div class="detail">
+                    <ol class="types">
+                        ${pokemon.types.map((type) => `<li class="type slideInLeft ${type}">${type}</li>`).join('')}
+                    </ol>
+                <img src="${pokemon.photo}" alt="${pokemon.name}" width="156" height="144" class="slideInRight"> 
+                </div>
+            </a>
+        </li> 
+    `
+        ).join('')
+        pokemonList.innerHTML += newHtml
 
-function displayPokemonStats(pokemon) {
-  const abaContent = document.getElementById('abaContent');
-  const pokemonImage = document.getElementById('pokemonImage');
-  const pokemonName = document.getElementById('pokemonName');
-  const statsList = document.getElementById('statsList');
-  const pokemonAba = document.getElementById('pokemonAba');
+        input.oninput = () => {
+            if (input.value.length > 0) {
+                pokemonList.innerHTML = ""
+            } else {
+                pokemonList.innerHTML = newHtml
+            }
 
-  pokemonAba.className = 'pokemon-aba';
+            pokemons.forEach((pokemon) => {
+                const pokeName = pokemon.name.toString();
+                let adicionouPoke = false;
+                let str = ''
+                let inputValue = input.value.toLowerCase()
 
-  pokemonAba.classList.add(pokemon.type.toLowerCase());
-
-  statsList.innerHTML = '';
-
-  const stats = [
-      { name: 'HP', value: pokemon.stats.hp, max: 255 },
-      { name: 'Ataque', value: pokemon.stats.atk, max: 255 },
-      { name: 'Defesa', value: pokemon.stats.def, max: 255 },
-      { name: 'Ataque Especial', value: pokemon.stats.sAtk, max: 255 },
-      { name: 'Defesa Especial', value: pokemon.stats.sDef, max: 255 },
-      { name: 'Velocidade', value: pokemon.stats.spd, max: 255 },
-  ];
-
-  stats.forEach((stat) => {
-      const listItem = document.createElement('li');
-      listItem.innerHTML = `<strong>${stat.name}:</strong> <span id="${stat.name.toLowerCase()}Value">${stat.value}</span>`;
-      const statBar = document.createElement('div');
-      statBar.className = 'stat-bar';
-      statBar.style.width = `${(stat.value / stat.max) * 100}%`;
-      listItem.appendChild(statBar);
-      statsList.appendChild(listItem);
-  });
-
-  pokemonImage.src = pokemon.photo;
-
-  pokemonName.textContent = pokemon.name;
-
-  pokemonName.textContent = pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1);
-
-  pokemonAba.style.display = 'block';
+                for (let i = 0; i < pokeName.length; i++) {
+                    str += pokeName[i]
+                    if (inputValue.includes(pokeName[i]) && inputValue === str) {
+                        console.log(str)
+                        adicionouPoke = true;
+                    }
+                }
+                if (adicionouPoke) {
+                    const newHtml = `
+                            <li class="fadeIn">
+                                <a href="details.html?id=${pokemon.id}" class="pokemon">
+                                    <span class="number slideInDown">#${pokemon.number}</span>
+                                    <h2 class="name slideInDown">${pokemon.name}</h2>
+                                    <div class="detail">
+                                        <ol class="types">
+                                            ${pokemon.types.map((type) => `<li class="type slideInLeft ${type}">${type}</li>`).join('')}
+                                        </ol>
+                                        <img src="${pokemon.photo}" alt="${pokemon.name}" width="156" height="144" class="slideInRight"> 
+                                    </div>
+                                </a>
+                            </li> 
+                        `
+                    pokemonList.innerHTML += newHtml
+                }
+            }
+            )
+        }
+    })
 }
 
+loadPokemonitens(offset, limit)
 
-function closeAba() {
-  const aba = document.getElementById('pokemonAba');
-  aba.style.display = 'none';
-}
+loadMoreButton.addEventListener('click', () => {
+    offset += limit
 
-window.onclick = function (event) {
-  const aba = document.getElementById('pokemonAba');
-  if (event.target === aba) {
-      aba.style.display = 'none';
-  }
-};
+    const qtdRecord = offset + limit
 
-document.addEventListener('click', function (event) {
-  const statsBtn = event.target.closest('.stats-btn');
-  if (statsBtn) {
-      const pokemonData = JSON.parse(statsBtn.dataset.pokemon);
-      displayPokemonStats(pokemonData);
-  }
-});
+    if (qtdRecord >= maxRecords) {
+        const newLimit = maxRecords - offset
+        loadPokemonitens(offset, newLimit)
+
+        //loadMoreButton.parentElement.removeChild(loadMoreButton)
+    } else {
+        loadPokemonitens(offset, limit)
+        
+    }
+})
